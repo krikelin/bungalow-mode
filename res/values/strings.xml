@@ -1,0 +1,9 @@
+<resources>
+
+    <string name="app_name">BungalowMode</string>
+	<string name="bungalow_mode">Bungalow mode</string>
+	<string name="bungalow_mode_desc">Bungalow mode is enabled</string>
+	<string name="use_web">Use data connection</string>
+	<string name="online_on">Access internet</string>
+	<string name="online_off">Disconnect from internet during bungalow</string>
+</resources>

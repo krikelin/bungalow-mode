@@ -1,0 +1,174 @@
+package com.aleros.bungalowmode;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.media.AudioManager;
+import android.net.ConnectivityManager;
+import android.os.Handler;
+import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.Builder;
+
+public class BungalowModeService extends Service {
+	public void checkBungalowMode(Date _time) {
+		AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		BungalowDatabase bd = new BungalowDatabase(BungalowModeService.this);
+		SQLiteDatabase db = bd.getWritableDatabase();
+		SharedPreferences prefs = (SharedPreferences)PreferenceManager.getDefaultSharedPreferences(this);
+		
+		try {		
+			int timeOfDay = _time.getHours() * 60 + _time.getMinutes();
+			Cursor t = db.query("periods", new String[] {"startTime", "endTime", "lockout", "silence"}, "? BETWEEN startTime AND endTime", new String[] { String.valueOf(timeOfDay)}, null, null, null);
+			while(t.moveToNext()) {
+				boolean offline = !prefs.getBoolean("online", t.getInt(t.getColumnIndex("lockout")) == 1);
+				@SuppressWarnings("unused")
+				boolean silence = t.getInt(t.getColumnIndex("silence")) == 1;
+				
+				// Disable bungalow mode
+				
+					if(offline) {
+						try {	
+							audio.setStreamVolume(AudioManager.STREAM_NOTIFICATION, 0, 0);
+							setMobileDataEnabled(BungalowModeService.this, false);
+						} catch (SecurityException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IllegalArgumentException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (NoSuchFieldException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IllegalAccessException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (NoSuchMethodException e) {
+							// TO DO Auto-generated catch block
+							e.printStackTrace();
+						} catch (InvocationTargetException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					// Create notification
+					NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
+					NotificationCompat.Builder builder = new Builder(BungalowModeService.this);
+					Intent i = new Intent(BungalowModeService.this, BungalowActivity.class);
+					PendingIntent pi = PendingIntent.getActivity(BungalowModeService.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+					builder.setContentIntent(pi);
+					builder.setPriority(1);
+					builder.setContentTitle(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
+					builder.setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
+					builder.setContentInfo(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode));
+					builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_active);
+					builder.setOngoing(true);
+					nm.notify(126123, builder.build());
+				 
+				
+			}
+			if(t.getCount() < 1) {
+				try {
+					setMobileDataEnabled(BungalowModeService.this, true);
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchFieldException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
+				NotificationCompat.Builder builder = new Builder(BungalowModeService.this);
+				Intent i = new Intent(BungalowModeService.this, BungalowActivity.class);
+				PendingIntent pi = PendingIntent.getActivity(BungalowModeService.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+				builder.setContentIntent(pi);
+				builder.setPriority(1);
+				builder.setContentTitle("");
+				builder.setContentText("");
+				builder.setContentInfo("");
+				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_inactive);
+				builder.setOngoing(true);
+				nm.notify(126123, builder.build());
+			
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			db.close();
+		}
+	}
+	private void setMobileDataEnabled(Context context, boolean enabled) throws ClassNotFoundException, SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+		   final ConnectivityManager conman = (ConnectivityManager)  context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		   final Class<?> conmanClass = Class.forName(conman.getClass().getName());
+		   final Field iConnectivityManagerField = conmanClass.getDeclaredField("mService");
+		   iConnectivityManagerField.setAccessible(true);
+		   final Object iConnectivityManager = iConnectivityManagerField.get(conman);
+		   final Class<?> iConnectivityManagerClass =  Class.forName(iConnectivityManager.getClass().getName());
+		   final Method setMobileDataEnabledMethod = iConnectivityManagerClass.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
+		   setMobileDataEnabledMethod.setAccessible(true);
+
+		   setMobileDataEnabledMethod.invoke(iConnectivityManager, enabled);
+		}
+	Handler mHandler;
+	Runnable mRunnable;
+	private static final int PERIOD = 60 * 1000;
+	@Override
+	public void onStart(Intent intent, int startId) {
+		// TODO Auto-generated method stub
+		//BungalowModeService.this.checkBungalowMode(new Date(2013,1,1, 9,15));
+		mHandler = new Handler();
+		mRunnable = new Runnable() { 
+	       public void run() {
+	    	   checkBungalowMode(new Date());
+	         mHandler.postDelayed(this, PERIOD);
+	       }
+		};
+		mRunnable.run();
+	   
+		
+	}
+
+	@Override
+	public void onCreate() {
+		// TODO Auto-generated method stub
+		//BungalowModeService.this.checkBungalowMode(new Date(2013,1,1, 9,15));
+		super.onCreate();
+	}
+	@Override
+	public IBinder onBind(Intent arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}
