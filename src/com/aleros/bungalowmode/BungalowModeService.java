@@ -4,9 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -17,8 +14,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.os.Binder;
 import android.os.Handler;
-import android.os.IBinder;
+import android.os.IBinder; 
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -33,7 +31,7 @@ public class BungalowModeService extends Service {
 		try {		
 			int timeOfDay = _time.getHours() * 60 + _time.getMinutes();
 			Cursor t = db.query("periods", new String[] {"startTime", "endTime", "lockout", "silence"}, "? BETWEEN startTime AND endTime", new String[] { String.valueOf(timeOfDay)}, null, null, null);
-			while(t.moveToNext()) {
+			while(t.moveToNext()) { 
 				boolean offline = !prefs.getBoolean("online", t.getInt(t.getColumnIndex("lockout")) == 1);
 				@SuppressWarnings("unused")
 				boolean silence = t.getInt(t.getColumnIndex("silence")) == 1;
@@ -84,30 +82,7 @@ public class BungalowModeService extends Service {
 				
 			}
 			if(t.getCount() < 1) {
-				try {
-					setMobileDataEnabled(BungalowModeService.this, true);
-				} catch (SecurityException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (NoSuchFieldException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (NoSuchMethodException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				
 				NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
 				NotificationCompat.Builder builder = new Builder(BungalowModeService.this);
 				Intent i = new Intent(BungalowModeService.this, BungalowActivity.class);
@@ -123,7 +98,7 @@ public class BungalowModeService extends Service {
 			
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace(); 
 		} finally {
 			db.close();
 		}
@@ -142,23 +117,105 @@ public class BungalowModeService extends Service {
 		}
 	Handler mHandler;
 	Runnable mRunnable;
+	public class LocalBinder extends Binder {
+	  public BungalowModeService getServerInstance() {
+	   return BungalowModeService.this;
+	  }
+	}
+	private IBinder mBinder = new LocalBinder();
+	@SuppressWarnings("unused")
 	private static final int PERIOD = 60 * 1000;
 	@Override
 	public void onStart(Intent intent, int startId) {
 		// TODO Auto-generated method stub
 		//BungalowModeService.this.checkBungalowMode(new Date(2013,1,1, 9,15));
-		mHandler = new Handler();
-		mRunnable = new Runnable() { 
-	       public void run() {
-	    	   checkBungalowMode(new Date());
-	         mHandler.postDelayed(this, PERIOD);
-	       }
-		};
-		mRunnable.run();
+		SharedPreferences prefs = (SharedPreferences)PreferenceManager.getDefaultSharedPreferences(this);
+		boolean bungalow = prefs.getBoolean("bungalow", false);
+		
+		setNotification(bungalow ? BungalowModeService.STATE_BUNGALOW_ON : BungalowModeService.STATE_BUNGALOW_IDLE);
 	   
 		
 	}
-
+	/**
+	 * Activate bungalow mode. Data connection will be disabled if offline preference is active
+	 */
+	public void activeBungalowMode() {
+		setNotification(BungalowModeService.STATE_BUNGALOW_ON);
+	}
+	
+	/**
+	 * Deactivate bungalow mode. Data traffic is turned on
+	 */
+	public void deactivateBungalowMode() {
+		setNotification(BungalowModeService.STATE_BUNGALOW_IDLE);
+	}
+	public static final int STATE_BUNGALOW_IDLE = 0x0;
+	public static final int STATE_BUNGALOW_ON = 0x1;
+	
+	public void setNotification(int type) {
+		try {
+			AudioManager audio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+			
+			SharedPreferences prefs = (SharedPreferences)PreferenceManager.getDefaultSharedPreferences(this);
+			NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
+			NotificationCompat.Builder builder = new Builder(BungalowModeService.this);
+			Intent i = new Intent(BungalowModeService.this, BungalowActivity.class);
+			PendingIntent pi = PendingIntent.getActivity(BungalowModeService.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+			builder.setContentIntent(pi);
+			switch(type) {
+			case STATE_BUNGALOW_ON:
+				audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
+				audio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+				
+				setMobileDataEnabled(BungalowModeService.this, prefs.getBoolean("offline", false));
+				
+				
+				builder.setContentTitle(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
+				builder.setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
+				builder.setContentInfo(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode));
+				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_active);
+				break;
+				
+			case STATE_BUNGALOW_IDLE:
+				audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_ON);
+				audio.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+				
+				setMobileDataEnabled(BungalowModeService.this, true);
+				
+				builder.setPriority(1);
+				builder.setContentTitle("");
+				builder.setContentText("");
+				builder.setContentInfo("");
+				
+				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_inactive);
+				
+				break;
+			}
+			builder.setOngoing(true);
+			nm.notify(126123, builder.build());
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	@Override
 	public void onCreate() {
 		// TODO Auto-generated method stub
@@ -168,7 +225,7 @@ public class BungalowModeService extends Service {
 	@Override
 	public IBinder onBind(Intent arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return mBinder;
 	}
 
 }

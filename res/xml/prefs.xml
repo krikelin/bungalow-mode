@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-    <CheckBoxPreference android:title="@string/use_web" android:key="online" android:summaryOn="@string/online_on" android:summaryOff="@string/online_off"/>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" ><CheckBoxPreference android:summary="@string/bungalow_mode_desc" android:title="@string/bungalow_mode" android:key="bungalow" /><CheckBoxPreference android:title="@string/use_web" android:key="online" android:summaryOn="@string/online_on" android:summaryOff="@string/online_off"/>
+    
+
     
 
 </PreferenceScreen>
