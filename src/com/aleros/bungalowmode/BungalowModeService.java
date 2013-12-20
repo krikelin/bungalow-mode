@@ -7,6 +7,7 @@ import java.util.Date;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -66,7 +67,7 @@ public class BungalowModeService extends Service {
 						}
 					}
 					// Create notification
-					NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
+				/*	NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
 					NotificationCompat.Builder builder = new Builder(BungalowModeService.this);
 					Intent i = new Intent(BungalowModeService.this, BungalowActivity.class);
 					PendingIntent pi = PendingIntent.getActivity(BungalowModeService.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -75,26 +76,67 @@ public class BungalowModeService extends Service {
 					builder.setContentTitle(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
 					builder.setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
 					builder.setContentInfo(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode));
-					builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_active);
-					builder.setOngoing(true);
-					nm.notify(126123, builder.build());
+					builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_status_bungalow);
+					builder.setOngoing(true);*/
+					NotificationCompat.Builder mBuilder =
+					        new NotificationCompat.Builder(this)
+					        .setSmallIcon(R.drawable.ic_status_bungalow)
+					        .setContentTitle(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode))
+					        .setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
+					// Creates an explicit intent for an Activity in your app
+					Intent resultIntent = new Intent(this, BungalowActivity.class);
+
+					// The stack builder object will contain an artificial back stack for the
+					// started Activity.
+					// This ensures that navigating backward from the Activity leads out of
+					// your application to the Home screen.
+					TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+					// Adds the back stack for the Intent (but not the Intent itself)
+					stackBuilder.addParentStack(BungalowActivity.class);
+					// Adds the Intent that starts the Activity to the top of the stack
+					stackBuilder.addNextIntent(resultIntent);
+					PendingIntent resultPendingIntent =
+					        stackBuilder.getPendingIntent(
+					            0,
+					            PendingIntent.FLAG_UPDATE_CURRENT
+					        );
+					mBuilder.setContentIntent(resultPendingIntent);
+					NotificationManager mNotificationManager =
+					    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+					// mId allows you to update the notification later on.
+					mNotificationManager.notify(11215, mBuilder.build());
 				 
 				
 			}
 			if(t.getCount() < 1) {
 				
-				NotificationManager nm = (NotificationManager)getSystemService(Service.NOTIFICATION_SERVICE);
-				NotificationCompat.Builder builder = new Builder(BungalowModeService.this);
-				Intent i = new Intent(BungalowModeService.this, BungalowActivity.class);
-				PendingIntent pi = PendingIntent.getActivity(BungalowModeService.this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-				builder.setContentIntent(pi);
-				builder.setPriority(1);
-				builder.setContentTitle("");
-				builder.setContentText("");
-				builder.setContentInfo("");
-				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_inactive);
-				builder.setOngoing(true);
-				nm.notify(126123, builder.build());
+				NotificationCompat.Builder mBuilder =
+				        new NotificationCompat.Builder(this)
+				        .setSmallIcon(R.drawable.ic_status_normal)
+				        .setContentTitle(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode))
+					    .setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
+				// Creates an explicit intent for an Activity in your app
+				Intent resultIntent = new Intent(this, BungalowActivity.class);
+
+				// The stack builder object will contain an artificial back stack for the
+				// started Activity.
+				// This ensures that navigating backward from the Activity leads out of
+				// your application to the Home screen.
+				TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+				// Adds the back stack for the Intent (but not the Intent itself)
+				stackBuilder.addParentStack(BungalowActivity.class);
+				// Adds the Intent that starts the Activity to the top of the stack
+				stackBuilder.addNextIntent(resultIntent);
+				PendingIntent resultPendingIntent =
+				        stackBuilder.getPendingIntent(
+				            0,
+				            PendingIntent.FLAG_UPDATE_CURRENT
+				        );
+				mBuilder.setContentIntent(resultPendingIntent);
+				NotificationManager mNotificationManager =
+				    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+				// mId allows you to update the notification later on.
+				mNotificationManager.notify(11215, mBuilder.build());
 			
 			}
 		} catch (Exception e) {
@@ -164,30 +206,30 @@ public class BungalowModeService extends Service {
 			builder.setContentIntent(pi);
 			switch(type) {
 			case STATE_BUNGALOW_ON:
-				audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
-				audio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+			//	audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_OFF);
+				//audio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
 				
-				setMobileDataEnabled(BungalowModeService.this, prefs.getBoolean("offline", false));
+		//		setMobileDataEnabled(BungalowModeService.this, prefs.getBoolean("offline", false));
 				
 				
 				builder.setContentTitle(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
 				builder.setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
 				builder.setContentInfo(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode));
-				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_active);
+				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_status_bungalow);
 				break;
-				
+				 
 			case STATE_BUNGALOW_IDLE:
-				audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_ON);
-				audio.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+			//	audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_ON);
+		//		audio.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
 				
-				setMobileDataEnabled(BungalowModeService.this, true);
+			//	setMobileDataEnabled(BungalowModeService.this, true);
 				
 				builder.setPriority(1);
 				builder.setContentTitle("");
 				builder.setContentText("");
 				builder.setContentInfo("");
 				
-				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_bungalow_mode_inactive);
+				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_status_normal);
 				
 				break;
 			}
@@ -199,7 +241,7 @@ public class BungalowModeService extends Service {
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+			/*	} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchFieldException e) {
@@ -213,7 +255,7 @@ public class BungalowModeService extends Service {
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();*/
 		}
 	}
 	@Override

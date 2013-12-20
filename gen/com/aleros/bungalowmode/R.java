@@ -17,6 +17,8 @@ public final class R {
         public static final int ic_bungalow_mode_inactive=0x7f020003;
         public static final int ic_bungalow_mode_on=0x7f020004;
         public static final int ic_launcher=0x7f020005;
+        public static final int ic_status_bungalow=0x7f020006;
+        public static final int ic_status_normal=0x7f020007;
     }
     public static final class layout {
         public static final int e=0x7f030000;
