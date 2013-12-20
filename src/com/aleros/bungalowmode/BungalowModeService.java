@@ -221,10 +221,10 @@ public class BungalowModeService extends Service {
 			case STATE_BUNGALOW_IDLE:
 			//	audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_ON);
 		//		audio.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-				
+				 
 			//	setMobileDataEnabled(BungalowModeService.this, true);
 				
-				builder.setPriority(1);
+				builder.setPriority(1); 
 				builder.setContentTitle("");
 				builder.setContentText("");
 				builder.setContentInfo("");
