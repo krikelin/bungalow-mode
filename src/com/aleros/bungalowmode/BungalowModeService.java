@@ -216,7 +216,7 @@ public class BungalowModeService extends Service {
 				builder.setContentText(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode_desc));
 				builder.setContentInfo(getResources().getString(com.aleros.bungalowmode.R.string.bungalow_mode));
 				builder.setSmallIcon(com.aleros.bungalowmode.R.drawable.ic_status_bungalow);
-				break;
+				break; 
 				 
 			case STATE_BUNGALOW_IDLE:
 			//	audio.setVibrateSetting(AudioManager.VIBRATE_TYPE_NOTIFICATION, AudioManager.VIBRATE_SETTING_ON);
