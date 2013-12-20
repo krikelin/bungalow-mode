@@ -223,7 +223,7 @@ public class BungalowModeService extends Service {
 		//		audio.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
 				 
 			//	setMobileDataEnabled(BungalowModeService.this, true);
-				
+				 
 				builder.setPriority(1); 
 				builder.setContentTitle("");
 				builder.setContentText("");
